@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Microbiology Quiz</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0fdf4',
+              100: '#dcfce7',
+              500: '#22c55e',
+              600: '#16a34a',
+              700: '#15803d',
+              900: '#14532d'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    ::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.05);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 4px;
+    }
+    @keyframes ai-glow {
+      0%, 100% { transform: scale(1); filter: drop-shadow(0 0 2px rgba(168, 85, 247, 0.6)); }
+      50% { transform: scale(1.15); filter: drop-shadow(0 0 8px rgba(168, 85, 247, 0.9)); }
+    }
+    .animate-ai-sparkle {
+      animation: ai-glow 2s infinite ease-in-out;
+    }
+  </style>
+  <!-- Load External Data File First -->
+  <script src="questions.js"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col items-center justify-between font-sans antialiased selection:bg-purple-500 selection:text-white">
+
+  <div class="w-full max-w-md mx-auto min-h-screen flex flex-col justify-between p-4 relative">
+
+    <!-- Top Navigation Header -->
+    <header class="flex items-center justify-between pb-3 border-b border-slate-800">
+      <button onclick="goBack()" class="flex items-center gap-2 text-slate-400 hover:text-white transition-colors py-1 px-2 rounded-lg bg-slate-800/50 active:scale-95">
+        <i class="fa-solid fa-arrow-left text-sm"></i>
+        <span class="text-xs font-medium">Exit</span>
+      </button>
+      
+      <div class="text-center">
+        <span id="unit-title" class="text-xs font-semibold uppercase tracking-wider text-purple-400">Unit Quiz</span>
+        <div class="text-xs text-slate-400 font-mono" id="progress-indicator">0 / 0</div>
+      </div>
+
+      <div class="flex items-center gap-1 text-xs font-mono bg-slate-800/80 px-2.5 py-1 rounded-full text-slate-300 border border-slate-700">
+        <i class="fa-regular fa-clock text-purple-400"></i>
+        <span id="timer-display">00:00</span>
+      </div>
+    </header>
+
+    <!-- Quiz Card Body -->
+    <main class="my-auto py-4 flex-1 flex flex-col justify-center">
+      <div id="quiz-card" class="bg-slate-800/90 border border-slate-700/80 rounded-2xl p-5 shadow-xl backdrop-blur-sm relative overflow-hidden transition-all duration-300">
+        
+        <div class="flex items-center justify-between mb-3">
+          <span id="question-tag" class="text-[10px] font-semibold tracking-wide bg-purple-950/80 text-purple-300 px-2.5 py-0.5 rounded-full border border-purple-800/50">
+            MCQ
+          </span>
+          <span id="year-tag" class="text-[10px] font-medium text-slate-400 bg-slate-900/60 px-2 py-0.5 rounded">
+            --
+          </span>
+        </div>
+
+        <h2 id="question-text" class="text-base font-medium leading-relaxed text-slate-100 mb-5">
+          Loading question...
+        </h2>
+
+        <div id="options-container" class="space-y-2.5"></div>
+
+        <div id="explanation-box" class="hidden mt-4 pt-3 border-t border-slate-700/60 text-xs text-slate-300 bg-slate-900/40 p-3 rounded-xl">
+          <div class="flex items-center gap-1.5 font-semibold text-emerald-400 mb-1">
+            <i class="fa-solid fa-circle-info"></i> Explanation
+          </div>
+          <p id="explanation-text" class="leading-relaxed text-slate-300"></p>
+        </div>
+
+      </div>
+
+      <!-- AI Search Button -->
+      <div class="mt-4">
+        <button onclick="openAIPopup()" class="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-purple-900/40 via-slate-800 to-indigo-900/40 border border-purple-500/30 hover:border-purple-500/60 text-purple-200 text-xs font-medium flex items-center justify-center gap-2.5 shadow-lg active:scale-[0.99] transition-all">
+          <i class="fa-solid fa-wand-magic-sparkles text-purple-400 animate-ai-sparkle text-sm"></i>
+          <span>Search this question on AI</span>
+        </button>
+      </div>
+    </main>
+
+    <!-- Bottom Controls & Navigator -->
+    <footer class="space-y-4 pt-2">
+      <div class="flex items-center justify-between gap-3">
+        <button id="prev-btn" onclick="prevQuestion()" class="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 disabled:opacity-40 text-slate-200 text-xs font-semibold rounded-xl border border-slate-700 flex items-center justify-center gap-2 transition-all active:scale-95">
+          <i class="fa-solid fa-chevron-left text-xs"></i> Previous
+        </button>
+        
+        <button id="next-btn" onclick="nextQuestion()" class="flex-1 py-2.5 bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold rounded-xl shadow-lg shadow-purple-950/50 flex items-center justify-center gap-2 transition-all active:scale-95">
+          Next <i class="fa-solid fa-chevron-right text-xs"></i>
+        </button>
+      </div>
+
+      <button id="analyze-trigger-btn" onclick="triggerAdAndAnalyze()" class="hidden w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-lg shadow-emerald-950/50 flex items-center justify-center gap-2 transition-all active:scale-95">
+        <i class="fa-solid fa-chart-pie text-sm"></i> Analyse Your Performance
+      </button>
+
+      <div class="bg-slate-800/50 p-3 rounded-2xl border border-slate-800">
+        <div class="text-[10px] uppercase font-semibold text-slate-400 mb-2 tracking-wider flex justify-between items-center">
+          <span>Question Navigator</span>
+          <span id="completion-rate" class="text-purple-400 font-mono">0% Completed</span>
+        </div>
+        <div id="navigator-grid" class="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-thin"></div>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- AI Popup Sheet -->
+  <div id="ai-popup-backdrop" onclick="closeAIPopup(event)" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 hidden opacity-0 transition-opacity duration-300">
+    <div id="ai-popup-sheet" class="fixed bottom-0 left-0 right-0 max-w-md mx-auto h-[55vh] bg-slate-900 border-t border-purple-500/40 rounded-t-3xl p-5 shadow-2xl z-50 flex flex-col justify-between transform translate-y-full transition-transform duration-300 ease-out" onclick="event.stopPropagation()">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <div class="flex items-center gap-2">
+          <i class="fa-solid fa-brain text-purple-400 text-base"></i>
+          <h3 class="text-xs font-bold text-slate-100 uppercase tracking-wider">Google AI Assistant</h3>
+        </div>
+        <button onclick="forceCloseAIPopup()" class="text-slate-400 hover:text-white p-1 rounded-lg bg-slate-800/80 w-7 h-7 flex items-center justify-center">
+          <i class="fa-solid fa-xmark text-sm"></i>
+        </button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto my-3 pr-1 text-xs space-y-3">
+        <div class="bg-slate-800/60 p-3 rounded-xl border border-slate-700/50">
+          <span class="text-[10px] font-bold text-purple-400 uppercase tracking-wider block mb-1">Target Prompt</span>
+          <p id="ai-prompt-preview" class="text-slate-300 font-mono text-[11px] leading-relaxed"></p>
+        </div>
+
+        <div id="ai-response-container" class="bg-purple-950/20 border border-purple-800/30 p-3.5 rounded-xl text-slate-200">
+          <div id="ai-loading" class="flex items-center justify-center gap-2 py-6 text-purple-400">
+            <i class="fa-solid fa-circle-notch fa-spin text-lg"></i>
+            <span class="font-medium text-xs">Querying Google AI...</span>
+          </div>
+          <div id="ai-content" class="hidden space-y-2">
+            <p class="font-semibold text-emerald-400 text-xs flex items-center gap-1.5">
+              <i class="fa-solid fa-check"></i> Concise AI Summary
+            </p>
+            <p id="ai-summary-text" class="text-slate-200 leading-relaxed text-xs"></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="pt-2">
+        <a id="ai-google-external-link" href="#" target="_blank" class="w-full py-2.5 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all">
+          <span>Search Direct on Google</span>
+          <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Performance Modal -->
+  <div id="analysis-modal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 w-full max-w-md rounded-3xl p-6 shadow-2xl relative flex flex-col max-h-[90vh] overflow-y-auto">
+      <button onclick="closeAnalysisModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white p-2 rounded-full bg-slate-800 border border-slate-700 w-8 h-8 flex items-center justify-center active:scale-90 transition-all">
+        <i class="fa-solid fa-xmark text-sm"></i>
+      </button>
+
+      <div class="text-center mb-6">
+        <div class="w-12 h-12 bg-purple-500/10 border border-purple-500/30 rounded-2xl flex items-center justify-center mx-auto mb-2 text-purple-400">
+          <i class="fa-solid fa-chart-line text-xl"></i>
+        </div>
+        <h2 class="text-base font-bold text-white uppercase tracking-wider">Performance Analytics</h2>
+        <p class="text-xs text-slate-400 mt-0.5" id="analysis-unit-name">Unit Summary</p>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3 mb-5">
+        <div class="bg-slate-800/60 border border-slate-700/60 p-3.5 rounded-2xl text-center">
+          <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Score</span>
+          <span id="anal-score" class="text-xl font-extrabold text-emerald-400 font-mono">0/0</span>
+        </div>
+        <div class="bg-slate-800/60 border border-slate-700/60 p-3.5 rounded-2xl text-center">
+          <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Accuracy</span>
+          <span id="anal-accuracy" class="text-xl font-extrabold text-purple-400 font-mono">0%</span>
+        </div>
+        <div class="bg-slate-800/60 border border-slate-700/60 p-3.5 rounded-2xl text-center">
+          <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Total Time</span>
+          <span id="anal-time" class="text-base font-bold text-slate-200 font-mono">0m 0s</span>
+        </div>
+        <div class="bg-slate-800/60 border border-slate-700/60 p-3.5 rounded-2xl text-center">
+          <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Avg Speed</span>
+          <span id="anal-speed" class="text-base font-bold text-slate-200 font-mono">0s/q</span>
+        </div>
+      </div>
+
+      <div class="space-y-2 mb-6">
+        <div class="flex justify-between items-center bg-emerald-950/20 border border-emerald-800/30 px-3.5 py-2 rounded-xl text-xs">
+          <span class="text-emerald-300 flex items-center gap-2"><i class="fa-solid fa-circle-check"></i> Correct Answers</span>
+          <span id="anal-correct-count" class="font-bold text-emerald-400 font-mono">0</span>
+        </div>
+        <div class="flex justify-between items-center bg-rose-950/20 border border-rose-800/30 px-3.5 py-2 rounded-xl text-xs">
+          <span class="text-rose-300 flex items-center gap-2"><i class="fa-solid fa-circle-xmark"></i> Incorrect Answers</span>
+          <span id="anal-wrong-count" class="font-bold text-rose-400 font-mono">0</span>
+        </div>
+        <div class="flex justify-between items-center bg-slate-800/40 border border-slate-700/40 px-3.5 py-2 rounded-xl text-xs">
+          <span class="text-slate-400 flex items-center gap-2"><i class="fa-solid fa-circle-minus"></i> Unattempted</span>
+          <span id="anal-skipped-count" class="font-bold text-slate-300 font-mono">0</span>
+        </div>
+      </div>
+
+      <div class="space-y-2 mt-auto">
+        <button onclick="restartQuiz()" class="w-full py-3 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-lg transition-all">
+          <i class="fa-solid fa-rotate-right mr-1"></i> Retake Quiz
+        </button>
+        <button onclick="goBack()" class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold transition-all">
+          Return to Dashboard
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentUnitId = 1;
+    let questions = [];
+    let currentIndex = 0;
+    let userAnswers = {};
+    let timerSeconds = 0;
+    let timerInterval = null;
+
+    document.addEventListener("DOMContentLoaded", function () {
+      initQuiz();
+    });
+
+    function initQuiz() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const unitParam = urlParams.get('unit');
+      if (unitParam) {
+        currentUnitId = parseInt(unitParam, 10) || 1;
+      }
+
+      document.getElementById('unit-title').innerText = `Unit ${currentUnitId} Quiz`;
+      document.getElementById('analysis-unit-name').innerText = `Unit ${currentUnitId} Breakdown`;
+
+      const db = window.QUESTION_DATABASE || [];
+      questions = db.filter(q => String(q.unitId) === String(currentUnitId));
+
+      if (questions.length === 0) {
+        document.getElementById('question-text').innerText = `No questions found for Unit ${currentUnitId}.`;
+        document.getElementById('next-btn').disabled = true;
+        document.getElementById('prev-btn').disabled = true;
+        return;
+      }
+
+      renderNavigator();
+      loadQuestion(0);
+      startTimer();
+    }
+
+    function startTimer() {
+      clearInterval(timerInterval);
+      timerSeconds = 0;
+      timerInterval = setInterval(() => {
+        timerSeconds++;
+        const mins = String(Math.floor(timerSeconds / 60)).padStart(2, '0');
+        const secs = String(timerSeconds % 60).padStart(2, '0');
+        document.getElementById('timer-display').innerText = `${mins}:${secs}`;
+      }, 1000);
+    }
+
+    function loadQuestion(index) {
+      if (index < 0 || index >= questions.length) return;
+      currentIndex = index;
+
+      const q = questions[currentIndex];
+
+      document.getElementById('progress-indicator').innerText = `${currentIndex + 1} / ${questions.length}`;
+      document.getElementById('year-tag').innerText = q.year || 'ABVMU';
+      document.getElementById('question-text').innerText = q.question;
+
+      const optionsContainer = document.getElementById('options-container');
+      optionsContainer.innerHTML = '';
+
+      const previousAttempt = userAnswers[q.id];
+
+      q.options.forEach((optText, optIdx) => {
+        const btn = document.createElement('button');
+        btn.className = "w-full text-left p-3.5 rounded-xl border text-xs font-medium transition-all flex items-start justify-between gap-3 active:scale-[0.99]";
+
+        if (!previousAttempt) {
+          btn.className += " bg-slate-900/60 border-slate-700/80 text-slate-200 hover:border-slate-500 hover:bg-slate-800/80";
+          btn.innerHTML = `<span>${optText}</span>`;
+          btn.onclick = () => selectOption(optIdx);
+        } else {
+          btn.disabled = true;
+          if (optIdx === q.answer) {
+            btn.className += " bg-emerald-950/80 border-emerald-500/80 text-emerald-200";
+            btn.innerHTML = `<span>${optText}</span><i class="fa-solid fa-circle-check text-emerald-400 text-sm mt-0.5"></i>`;
+          } else if (optIdx === previousAttempt.selectedOption) {
+            btn.className += " bg-rose-950/80 border-rose-500/80 text-rose-200";
+            btn.innerHTML = `<span>${optText}</span><i class="fa-solid fa-circle-xmark text-rose-400 text-sm mt-0.5"></i>`;
+          } else {
+            btn.className += " bg-slate-900/40 border-slate-800 text-slate-500 opacity-60";
+            btn.innerHTML = `<span>${optText}</span>`;
+          }
+        }
+
+        optionsContainer.appendChild(btn);
+      });
+
+      const expBox = document.getElementById('explanation-box');
+      if (previousAttempt && q.explanation) {
+        document.getElementById('explanation-text').innerText = q.explanation;
+        expBox.classList.remove('hidden');
+      } else {
+        expBox.classList.add('hidden');
+      }
+
+      document.getElementById('prev-btn').disabled = currentIndex === 0;
+
+      const isLast = currentIndex === questions.length - 1;
+      if (isLast) {
+        document.getElementById('next-btn').classList.add('hidden');
+        document.getElementById('analyze-trigger-btn').classList.remove('hidden');
+      } else {
+        document.getElementById('next-btn').classList.remove('hidden');
+        document.getElementById('analyze-trigger-btn').classList.add('hidden');
+      }
+
+      updateNavigatorHighlight();
+    }
+
+    function selectOption(optionIndex) {
+      const q = questions[currentIndex];
+      if (userAnswers[q.id]) return;
+
+      userAnswers[q.id] = {
+        selectedOption: optionIndex,
+        isCorrect: optionIndex === q.answer
+      };
+
+      loadQuestion(currentIndex);
+      renderNavigator();
+    }
+
+    function nextQuestion() {
+      if (currentIndex < questions.length - 1) {
+        loadQuestion(currentIndex + 1);
+      }
+    }
+
+    function prevQuestion() {
+      if (currentIndex > 0) {
+        loadQuestion(currentIndex - 1);
+      }
+    }
+
+    function renderNavigator() {
+      const navGrid = document.getElementById('navigator-grid');
+      navGrid.innerHTML = '';
+
+      let attemptedCount = 0;
+
+      questions.forEach((q, idx) => {
+        const dot = document.createElement('button');
+        dot.innerText = idx + 1;
+        dot.className = "min-w-[30px] h-7 px-1 rounded-lg text-[10px] font-bold font-mono transition-all flex items-center justify-center border ";
+
+        const ans = userAnswers[q.id];
+        if (ans) {
+          attemptedCount++;
+          if (ans.isCorrect) {
+            dot.className += " bg-emerald-500/20 border-emerald-500/80 text-emerald-300";
+          } else {
+            dot.className += " bg-rose-500/20 border-rose-500/80 text-rose-300";
+          }
+        } else {
+          dot.className += " bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700";
+        }
+
+        dot.onclick = () => loadQuestion(idx);
+        navGrid.appendChild(dot);
+      });
+
+      const percentage = Math.round((attemptedCount / questions.length) * 100) || 0;
+      document.getElementById('completion-rate').innerText = `${percentage}% Completed`;
+    }
+
+    function updateNavigatorHighlight() {
+      const navDots = document.getElementById('navigator-grid').children;
+      for (let i = 0; i < navDots.length; i++) {
+        if (i === currentIndex) {
+          navDots[i].classList.add('ring-2', 'ring-purple-400', 'ring-offset-1', 'ring-offset-slate-900');
+        } else {
+          navDots[i].classList.remove('ring-2', 'ring-purple-400', 'ring-offset-1', 'ring-offset-slate-900');
+        }
+      }
+    }
+
+    function openAIPopup() {
+      const q = questions[currentIndex];
+      const promptText = `Explain concisely in 2 lines: ${q.question} Options: ${q.options.join(', ')}`;
+      
+      document.getElementById('ai-prompt-preview').innerText = promptText;
+      const encodedQuery = encodeURIComponent(`${q.question} ${q.options.join(' ')}`);
+      document.getElementById('ai-google-external-link').href = `https://www.google.com/search?q=${encodedQuery}`;
+
+      document.getElementById('ai-loading').classList.remove('hidden');
+      document.getElementById('ai-content').classList.add('hidden');
+
+      const backdrop = document.getElementById('ai-popup-backdrop');
+      const sheet = document.getElementById('ai-popup-sheet');
+
+      backdrop.classList.remove('hidden');
+      setTimeout(() => {
+        backdrop.classList.remove('opacity-0');
+        sheet.classList.remove('translate-y-full');
+      }, 10);
+
+      setTimeout(() => {
+        document.getElementById('ai-loading').classList.add('hidden');
+        document.getElementById('ai-content').classList.remove('hidden');
+        document.getElementById('ai-summary-text').innerText = q.explanation || "Option " + (q.answer + 1) + " is correct based on medical microbiology standards.";
+      }, 800);
+    }
+
+    function closeAIPopup(event) {
+      forceCloseAIPopup();
+    }
+
+    function forceCloseAIPopup() {
+      const backdrop = document.getElementById('ai-popup-backdrop');
+      const sheet = document.getElementById('ai-popup-sheet');
+
+      sheet.classList.add('translate-y-full');
+      backdrop.classList.add('opacity-0');
+
+      setTimeout(() => {
+        backdrop.classList.add('hidden');
+      }, 300);
+    }
+
+    function triggerAdAndAnalyze() {
+      openAnalysisModal();
+    }
+
+    function openAnalysisModal() {
+      const totalQuestions = questions.length;
+      let correct = 0;
+      let wrong = 0;
+
+      Object.values(userAnswers).forEach(ans => {
+        if (ans.isCorrect) correct++;
+        else wrong++;
+      });
+
+      const unattempted = totalQuestions - (correct + wrong);
+      const accuracy = (correct + wrong) > 0 ? Math.round((correct / (correct + wrong)) * 100) : 0;
+      const speed = totalQuestions > 0 ? (timerSeconds / totalQuestions).toFixed(1) : 0;
+
+      document.getElementById('anal-score').innerText = `${correct}/${totalQuestions}`;
+      document.getElementById('anal-accuracy').innerText = `${accuracy}%`;
+      document.getElementById('anal-correct-count').innerText = correct;
+      document.getElementById('anal-wrong-count').innerText = wrong;
+      document.getElementById('anal-skipped-count').innerText = unattempted;
+
+      const mins = Math.floor(timerSeconds / 60);
+      const secs = timerSeconds % 60;
+      document.getElementById('anal-time').innerText = `${mins}m ${secs}s`;
+      document.getElementById('anal-speed').innerText = `${speed}s/q`;
+
+      document.getElementById('analysis-modal').classList.remove('hidden');
+    }
+
+    function closeAnalysisModal() {
+      document.getElementById('analysis-modal').classList.add('hidden');
+    }
+
+    function restartQuiz() {
+      userAnswers = {};
+      closeAnalysisModal();
+      startTimer();
+      renderNavigator();
+      loadQuestion(0);
+    }
+
+    function goBack() {
+      window.location.href = "index.html";
+    }
+  </script>
+</body>
+</html>
+

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+0<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -10,8 +10,8 @@
 <!-- TELEGRAM MINI APP SDK -->
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-<!-- ADSGRAM SDK (Official CDN) -->
-<script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+<!-- ADSGRAM SDK (Commented out until ad placement phase) -->
+<!-- <script src="https://sad.adsgram.ai/js/sad.min.js"></script> -->
 
 <style>
 :root{
@@ -75,25 +75,6 @@ h1{font-size:clamp(28px,7vw,46px);letter-spacing:-.045em;margin:9px 0 10px}
 .empty{color:var(--muted);font-size:14px;padding:12px 0}
 .saved-item{padding:13px 0;border-bottom:1px solid var(--line);font-size:14px}
 
-/* Interstitial Loading Overlay */
-.loading-overlay{
-  display:none;position:fixed;inset:0;background:rgba(17,24,39,0.92);
-  backdrop-filter:blur(6px);align-items:center;justify-content:center;
-  flex-direction:column;z-index:99;color:#fff;text-align:center;padding:20px
-}
-.loading-overlay.show{display:flex}
-.spinner{
-  width:38px;height:38px;border:3px solid rgba(255,255,255,0.2);
-  border-left-color:#fff;border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:16px
-}
-@keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
-
-.toast{
-  position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(15px);
-  opacity:0;pointer-events:none;background:#17191e;color:white;padding:11px 15px;border-radius:13px;
-  font-size:12px;transition:.25s;z-index:30;text-align:center
-}
-.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 .name-screen{
   position:fixed;inset:0;background:#f7f8fa;z-index:50;display:none;align-items:center;justify-content:center;padding:22px
 }
@@ -134,95 +115,88 @@ footer{text-align:center;color:#9aa0a8;font-size:10px;margin-top:24px}
     MBBS 24 • GMC Firozabad
   </div>
   <div class="disclaimer">
-    This app may display short video advertisements to support free hosting and medical education development.
+    Free interactive question bank for ABVMU microbiology preparation.
   </div>
 </header>
 
-<section class="card greeting">
-  <h2 id="greeting">Hello, future microbiologist.</h2>
-  <p id="motivation">Don't let the microbes colonize your marks. Colonize the syllabus first.</p>
-</section>
+<div id="mainView">
+  <section class="card greeting">
+    <h2 id="greeting">Hello, future microbiologist.</h2>
+    <p id="motivation">Don't let the microbes colonize your marks. Colonize the syllabus first.</p>
+  </section>
 
-<section class="card qod">
-  <div class="section-label">Microbiology • Question of the Day</div>
-  <h3 id="qodQuestion">Loading today's question…</h3>
-  <div id="qodOptions" class="options"></div>
-  <div id="qodFeedback" class="feedback"></div>
-</section>
+  <section class="card qod">
+    <div class="section-label">Microbiology • Question of the Day</div>
+    <h3 id="qodQuestion">Loading today's question…</h3>
+    <div id="qodOptions" class="options"></div>
+    <div id="qodFeedback" class="feedback"></div>
+  </section>
 
-<section class="card menu">
-  <div class="menu-title">Study menu</div>
+  <section class="card menu">
+    <div class="menu-title">Study menu</div>
 
-  <button class="menu-btn" onclick="toggleUnits()">
-    <span>Start PYQ Quiz Mode<span class="sub">Choose a microbiology unit</span></span>
-    <span class="chev">⌄</span>
-  </button>
+    <button class="menu-btn" onclick="toggleUnits()">
+      <span>Start PYQ Quiz Mode<span class="sub">Choose a microbiology unit</span></span>
+      <span class="chev">⌄</span>
+    </button>
 
-  <div id="unitList" class="unit-list">
-    <button class="unit" onclick="openUnit(1, 'General Microbiology')">
-      <span><b>01 • General Microbiology</b><small>Culture Media & Sterilization</small></span>
-      <span class="status-tag">READY</span>
-    </button>
-    <button class="unit" onclick="openUnit(2, 'Gastrointestinal Tract')">
-      <span><b>02 • GIT</b><small>Enteric Pathogens & Parasites</small></span>
-      <span class="status-tag">READY</span>
-    </button>
-    <button class="unit" onclick="openUnit(3, 'Hepatobiliary System')">
-      <span><b>03 • Hepatobiliary System</b><small>Hepatitis & Biliary Infections</small></span>
-      <span class="status-tag">READY</span>
-    </button>
-    <button class="unit" onclick="openUnit(4, 'Immunity & Immunology')">
-      <span><b>04 • Immunity</b><small>Antigens, Antibodies & Hypersensitivity</small></span>
-      <span class="status-tag">READY</span>
-    </button>
-    <button class="unit" onclick="openUnit(5, 'CVS & Blood Stream')">
-      <span><b>05 • CVS & Blood</b><small>Bacteremia & Endocarditis</small></span>
-      <span class="status-tag">READY</span>
-    </button>
-    <button class="unit" onclick="openUnit(6, 'Central Nervous System')">
-      <span><b>06 • CNS</b><small>Meningitis & Encephalitis</small></span>
-      <span class="status-tag">READY</span>
-    </button>
-    <button class="unit" onclick="openUnit(7, 'Respiratory Tract')">
-      <span><b>07 • Respiratory</b><small>TB, Pneumonia & Viral Infections</small></span>
-      <span class="status-tag">READY</span>
-    </button>
-    <button class="unit" onclick="openUnit(8, 'Musculoskeletal & Skin')">
-      <span><b>08 • Musculoskeletal & Skin</b><small>Soft Tissue Infections</small></span>
-      <span class="status-tag">READY</span>
-    </button>
-    <button class="unit" onclick="openUnit(9, 'Genitourinary & STDs')">
-      <span><b>09 • Genitourinary & STDs</b><small>UTIs & Venereal Pathogens</small></span>
-      <span class="status-tag">READY</span>
-    </button>
-    <button class="unit" onclick="openUnit(10, 'Zoonotic Diseases & Misc')">
-      <span><b>10 • Zoonotic & Misc</b><small>Vector-Borne & Hospital Infections</small></span>
-      <span class="status-tag">READY</span>
-    </button>
-  </div>
+    <div id="unitList" class="unit-list">
+      <button class="unit" onclick="openUnit(1, 'General Microbiology')">
+        <span><b>01 • General Microbiology</b><small>Culture Media & Sterilization</small></span>
+        <span class="status-tag">READY</span>
+      </button>
+      <button class="unit" onclick="openUnit(2, 'Gastrointestinal Tract')">
+        <span><b>02 • GIT</b><small>Enteric Pathogens & Parasites</small></span>
+        <span class="status-tag">READY</span>
+      </button>
+      <button class="unit" onclick="openUnit(3, 'Hepatobiliary System')">
+        <span><b>03 • Hepatobiliary System</b><small>Hepatitis & Biliary Infections</small></span>
+        <span class="status-tag">READY</span>
+      </button>
+      <button class="unit" onclick="openUnit(4, 'Immunity & Immunology')">
+        <span><b>04 • Immunity</b><small>Antigens, Antibodies & Hypersensitivity</small></span>
+        <span class="status-tag">READY</span>
+      </button>
+      <button class="unit" onclick="openUnit(5, 'CVS & Blood Stream')">
+        <span><b>05 • CVS & Blood</b><small>Bacteremia & Endocarditis</small></span>
+        <span class="status-tag">READY</span>
+      </button>
+      <button class="unit" onclick="openUnit(6, 'Central Nervous System')">
+        <span><b>06 • CNS</b><small>Meningitis & Encephalitis</small></span>
+        <span class="status-tag">READY</span>
+      </button>
+      <button class="unit" onclick="openUnit(7, 'Respiratory Tract')">
+        <span><b>07 • Respiratory</b><small>TB, Pneumonia & Viral Infections</small></span>
+        <span class="status-tag">READY</span>
+      </button>
+      <button class="unit" onclick="openUnit(8, 'Musculoskeletal & Skin')">
+        <span><b>08 • Musculoskeletal & Skin</b><small>Soft Tissue Infections</small></span>
+        <span class="status-tag">READY</span>
+      </button>
+      <button class="unit" onclick="openUnit(9, 'Genitourinary & STDs')">
+        <span><b>09 • Genitourinary & STDs</b><small>UTIs & Venereal Pathogens</small></span>
+        <span class="status-tag">READY</span>
+      </button>
+      <button class="unit" onclick="openUnit(10, 'Zoonotic Diseases & Misc')">
+        <span><b>10 • Zoonotic & Misc</b><small>Vector-Borne & Hospital Infections</small></span>
+        <span class="status-tag">READY</span>
+      </button>
+    </div>
 
-  <button class="menu-btn" onclick="toggleSaved()">
-    <span>View Saved MCQs<span class="sub">Your bookmarked questions</span></span>
-    <span class="chev">›</span>
-  </button>
-</section>
+    <button class="menu-btn" onclick="toggleSaved()">
+      <span>View Saved MCQs<span class="sub">Your bookmarked questions</span></span>
+      <span class="chev">›</span>
+    </button>
+  </section>
 
-<section id="saved" class="card saved">
-  <div class="section-label">Saved MCQs</div>
-  <div id="savedContent" class="empty">No saved MCQs yet.</div>
-</section>
+  <section id="saved" class="card saved">
+    <div class="section-label">Saved MCQs</div>
+    <div id="savedContent" class="empty">No saved MCQs yet.</div>
+  </section>
+</div>
 
 <footer>ABVMU Microbiology MCQs • Built for MBBS learning</footer>
 </main>
-
-<!-- Non-blocking Interstitial Transition Overlay -->
-<div id="loadingOverlay" class="loading-overlay">
-  <div class="spinner"></div>
-  <h3 style="margin:0 0 6px; font-size:18px;">Preparing Quiz Session...</h3>
-  <p style="margin:0; font-size:13px; opacity:0.8;">A brief ad may display before loading your unit.</p>
-</div>
-
-<div id="toast" class="toast"></div>
 
 <script>
 // TELEGRAM WEB APP INIT
@@ -231,9 +205,12 @@ if (window.Telegram && window.Telegram.WebApp) {
   window.Telegram.WebApp.expand();
 }
 
-// ADSGRAM CONFIGURATION
-// Use "check-status" during testing; change back to your approved block ID once confirmed
-const ADSGRAM_BLOCK_ID = "check-status"; 
+// =======================================================
+// AD INTEGRATION PLACEHOLDER
+// =======================================================
+// Paste your Adsgram Block ID here when ready:
+// const ADSGRAM_BLOCK_ID = "YOUR_APPROVED_NUMERIC_ID";
+// =======================================================
 
 const QUESTION_BANK = [
   {
@@ -343,50 +320,20 @@ function answerDaily(index,answer){
 
 function toggleUnits(){$("unitList").classList.toggle("open")}
 
-// COMPLIANT UNIT SELECTION FLOW
 function openUnit(unitId, unitName){
-  // Unit 1 opens instantly with zero ad checks
-  if(unitId === 1){
-    launchQuiz(unitId, unitName);
-    return;
-  }
+  // =======================================================
+  // FUTURE AD TRIGGER GOES HERE
+  // =======================================================
+  // When ready to monetize, call Adsgram SDK here before 
+  // triggering navigateToQuiz().
+  // =======================================================
 
-  showOverlay();
-
-  if(window.Adsgram){
-    const AdController = window.Adsgram.init({
-      blockId: ADSGRAM_BLOCK_ID,
-      debug: false
-    });
-
-    AdController.show()
-      .then((result) => {
-        hideOverlay();
-        launchQuiz(unitId, unitName);
-      })
-      .catch((err) => {
-        // Fallback: If ad fails or fills are unavailable, launch quiz anyway
-        console.warn("Adsgram Notice:", err);
-        hideOverlay();
-        launchQuiz(unitId, unitName);
-      });
-  } else {
-    hideOverlay();
-    launchQuiz(unitId, unitName);
-  }
+  navigateToQuiz(unitId, unitName);
 }
 
-function showOverlay(){
-  $("loadingOverlay").classList.add("show");
-}
-
-function hideOverlay(){
-  $("loadingOverlay").classList.remove("show");
-}
-
-function launchQuiz(unitId, unitName){
-  toast(`Opening Unit ${unitId}: ${unitName}`);
-  // Add core quiz initiation logic here
+function navigateToQuiz(unitId, unitName){
+  // Passes unit ID and name as URL parameters to quiz.html
+  window.location.href = `quiz.html?unitId=${unitId}&unitName=${encodeURIComponent(unitName)}`;
 }
 
 function toggleSaved(){
@@ -405,13 +352,6 @@ function renderSaved(){
 
 function escapeHTML(s){
   return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
-}
-
-function toast(msg){
-  $("toast").textContent=msg;
-  $("toast").classList.add("show");
-  clearTimeout(window.toastTimer);
-  window.toastTimer=setTimeout(()=>$("toast").classList.remove("show"),2500);
 }
 
 init();

@@ -6,6 +6,8 @@
   <title>Microbiology Quiz</title>
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Monetag SDK (Official CDN) -->
+<script src='//libtl.com/sdk.js' data-zone='11639645' data-sdk='show_11639645'></script>
   <script>
     tailwind.config = {
       theme: {
@@ -458,8 +460,20 @@
     }
 
     function triggerAdAndAnalyze() {
-      openAnalysisModal();
-    }
+      if (typeof show_11639645 === 'function') {
+        show_11639645()
+          .then(() => {
+            openAnalysisModal();
+          })
+          .catch(() => {
+            openAnalysisModal();
+          });
+      } else {
+        openAnalysisModal();
+      }
+    }    
+
+
 
     function openAnalysisModal() {
       const totalQuestions = questions.length;

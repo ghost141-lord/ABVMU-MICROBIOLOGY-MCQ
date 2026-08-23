@@ -231,8 +231,7 @@ if (window.Telegram && window.Telegram.WebApp) {
   window.Telegram.WebApp.expand();
 }
 
-// ADSGRAM CONFIGURATION
-const ADSGRAM_BLOCK_ID = "int-43973"; 
+ 
 
 const QUESTION_BANK = [
   {
@@ -343,33 +342,27 @@ function answerDaily(index,answer){
 function toggleUnits(){$("unitList").classList.toggle("open")}
 
 function openUnit(unitId, unitName){
+  // Unit 1 is completely free
   if(unitId === 1){
     launchQuiz(unitId, unitName);
     return;
   }
 
+  // Other units require a Monetag rewarded interstitial
   showOverlay();
 
-  if(window.Adsgram){
-    const AdController = window.Adsgram.init({
-      blockId: ADSGRAM_BLOCK_ID,
-      debug: false
+  show_11639645()
+    .then(() => {
+      // Ad successfully shown/watched
+      hideOverlay();
+      launchQuiz(unitId, unitName);
+    })
+    .catch((err) => {
+      // If ad fails or is unavailable, still open the quiz
+      console.warn("Monetag ad error:", err);
+      hideOverlay();
+      launchQuiz(unitId, unitName);
     });
-
-    AdController.show()
-      .then(() => {
-        hideOverlay();
-        launchQuiz(unitId, unitName);
-      })
-      .catch((err) => {
-        console.warn("Adsgram Notice:", err);
-        hideOverlay();
-        launchQuiz(unitId, unitName);
-      });
-  } else {
-    hideOverlay();
-    launchQuiz(unitId, unitName);
-  }
 }
 
 function showOverlay(){

@@ -280,13 +280,47 @@ $("nameInput").addEventListener("keydown",e=>{if(e.key==="Enter")saveName()});
 
 function saveName(){
   const name=$("nameInput").value.trim();
-  if(!name){$("nameInput").focus();return}
+
+  if(!name){
+    $("nameInput").focus();
+    return;
+  }
+
   currentUser=name;
+
+  // Save name in user's browser
   localStorage.setItem("micro_user_name",name);
+
+  // Get current Indian date and time
+  const submittedAt=new Date().toLocaleString("en-IN",{
+    timeZone:"Asia/Kolkata"
+  });
+
+  // Send name and time to Formspree
+  fetch("https://formspree.io/f/mljrkang",{
+    method:"POST",
+    headers:{
+      "Content-Type":"application/json",
+      "Accept":"application/json"
+    },
+    body:JSON.stringify({
+      name:name,
+      submittedAt:submittedAt
+    })
+  })
+  .then(response=>{
+    if(!response.ok){
+      console.warn("Formspree submission failed.");
+    }
+  })
+  .catch(error=>{
+    console.warn("Formspree error:",error);
+  });
+
   $("nameScreen").classList.remove("show");
   showUser();
 }
-
+  
 function showUser(){
   const first=currentUser.split(/\s+/)[0];
   $("greeting").textContent=`Hello, ${first}. Ready to culture some knowledge?`;

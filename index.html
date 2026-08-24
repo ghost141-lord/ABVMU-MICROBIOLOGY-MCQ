@@ -484,13 +484,31 @@ function renderSaved(){
   `).join("");
 }
 
-function openSavedQuestion(encodedId,unitId){
-  const questionId=decodeURIComponent(encodedId);
+// WITH THIS FIXED VERSION:
+function openSavedQuestion(encodedId, unitId) {
+  const questionId = decodeURIComponent(encodedId);
+  
+  // Unit 1 saved questions open freely without ads
+  if (unitId === 1) {
+    window.location.href = `quiz.html?unit=${unitId}&question=${encodeURIComponent(questionId)}`;
+    return;
+  }
 
-  window.location.href=
-    `quiz.html?unit=${unitId}&question=${encodeURIComponent(questionId)}`;
-    
+  // Units 2-10 trigger Monetag ad first
+  showOverlay();
+
+  show_11639645()
+    .then(() => {
+      hideOverlay();
+      window.location.href = `quiz.html?unit=${unitId}&question=${encodeURIComponent(questionId)}`;
+    })
+    .catch((err) => {
+      console.warn("Monetag ad error:", err);
+      hideOverlay();
+      window.location.href = `quiz.html?unit=${unitId}&question=${encodeURIComponent(questionId)}`;
+    });
 }
+
 function escapeHTML(s){
   return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
 }

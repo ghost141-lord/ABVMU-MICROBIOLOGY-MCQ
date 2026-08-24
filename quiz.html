@@ -47,6 +47,11 @@
     .animate-ai-sparkle {
       animation: ai-glow 2s infinite ease-in-out;
     }
+    .bookmark-active{
+  color:#facc15 !important;
+  border-color:rgba(250,204,21,.5) !important;
+  background:rgba(250,204,21,.08) !important;
+}
   </style>
   <!-- Load External Data File First -->
   <script src="questions.js"></script>
@@ -78,13 +83,25 @@
       <div id="quiz-card" class="bg-slate-800/90 border border-slate-700/80 rounded-2xl p-5 shadow-xl backdrop-blur-sm relative overflow-hidden transition-all duration-300">
         
         <div class="flex items-center justify-between mb-3">
-          <span id="question-tag" class="text-[10px] font-semibold tracking-wide bg-purple-950/80 text-purple-300 px-2.5 py-0.5 rounded-full border border-purple-800/50">
-            MCQ
-          </span>
-          <span id="year-tag" class="text-[10px] font-medium text-slate-400 bg-slate-900/60 px-2 py-0.5 rounded">
-            --
-          </span>
-        </div>
+  <div class="flex items-center gap-2">
+    <span id="question-tag" class="text-[10px] font-semibold tracking-wide bg-purple-950/80 text-purple-300 px-2.5 py-0.5 rounded-full border border-purple-800/50">
+      MCQ
+    </span>
+
+    <span id="year-tag" class="text-[10px] font-medium text-slate-400 bg-slate-900/60 px-2 py-0.5 rounded">
+      --
+    </span>
+  </div>
+
+  <button
+    id="bookmark-btn"
+    onclick="toggleBookmark()"
+    class="w-9 h-9 rounded-xl bg-slate-900/70 border border-slate-700 flex items-center justify-center text-slate-400 hover:text-yellow-400 hover:border-yellow-500/50 transition-all active:scale-90"
+    aria-label="Bookmark question"
+  >
+    <i id="bookmark-icon" class="fa-regular fa-bookmark"></i>
+  </button>
+</div>
 
         <h2 id="question-text" class="text-base font-medium leading-relaxed text-slate-100 mb-5">
           Loading question...
@@ -246,6 +263,131 @@
     let userAnswers = {};
     let timerSeconds = 0;
     let timerInterval = null;
+    
+    const UNIT_NAMES = {
+  1: "General Microbiology",
+  2: "Gastrointestinal Tract",
+  3: "Hepatobiliary System",
+  4: "Immunity & Immunology",
+  5: "CVS & Blood Stream",
+  6: "Central Nervous System",
+  7: "Respiratory Tract",
+  8: "Musculoskeletal & Skin",
+  9: "Genitourinary & STDs",
+  10: "Zoonotic Diseases & Misc"
+};
+
+function getBookmarks(){
+  try{
+    return JSON.parse(localStorage.getItem("micro_saved_mcqs") || "[]");
+  }catch(e){
+    return [];
+  }
+}
+
+function saveBookmarks(bookmarks){
+  localStorage.setItem(
+    "micro_saved_mcqs",
+    JSON.stringify(bookmarks)
+  );
+}
+
+function isBookmarked(questionId){
+  const bookmarks=getBookmarks();
+
+  return bookmarks.some(
+    q => String(q.id) === String(questionId)
+  );
+}
+
+function updateBookmarkButton(){
+  const q=questions[currentIndex];
+
+  if(!q)return;
+
+  const button=document.getElementById("bookmark-btn");
+  const icon=document.getElementById("bookmark-icon");
+
+  const saved=isBookmarked(q.id);
+
+  if(saved){
+    button.classList.add("bookmark-active");
+    icon.className="fa-solid fa-bookmark";
+    button.setAttribute("aria-label","Remove bookmark");
+  }else{
+    button.classList.remove("bookmark-active");
+    icon.className="fa-regular fa-bookmark";
+    button.setAttribute("aria-label","Bookmark question");
+  }
+}
+
+function toggleBookmark(){
+  const q=questions[currentIndex];
+
+  if(!q)return;
+
+  let bookmarks=getBookmarks();
+
+  const existingIndex=bookmarks.findIndex(
+    item => String(item.id) === String(q.id)
+  );
+
+  if(existingIndex !== -1){
+
+    bookmarks.splice(existingIndex,1);
+
+    saveBookmarks(bookmarks);
+
+    updateBookmarkButton();
+
+    showQuizToast("Bookmark removed");
+
+  }else{
+
+    const savedQuestion={
+      id:q.id,
+      unitId:q.unitId,
+      unitName:UNIT_NAMES[q.unitId] || `Unit ${q.unitId}`,
+      question:q.question,
+      options:q.options,
+      answer:q.answer,
+      year:q.year || "",
+      explanation:q.explanation || ""
+    };
+
+    bookmarks.push(savedQuestion);
+
+    saveBookmarks(bookmarks);
+
+    updateBookmarkButton();
+
+    showQuizToast("Question bookmarked");
+  }
+}
+
+function showQuizToast(message){
+  let toast=document.getElementById("quiz-toast");
+
+  if(!toast){
+    toast=document.createElement("div");
+
+    toast.id="quiz-toast";
+
+    toast.className=
+      "fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] bg-slate-100 text-slate-900 px-4 py-2.5 rounded-xl shadow-xl text-xs font-semibold";
+
+    document.body.appendChild(toast);
+  }
+
+  toast.textContent=message;
+  toast.style.opacity="1";
+
+  clearTimeout(window.quizToastTimer);
+
+  window.quizToastTimer=setTimeout(()=>{
+    toast.style.opacity="0";
+  },1800);
+}
 
     document.addEventListener("DOMContentLoaded", function () {
       initQuiz();
@@ -253,10 +395,21 @@
 
     function initQuiz() {
       const urlParams = new URLSearchParams(window.location.search);
+
       const unitParam = urlParams.get('unit');
-      if (unitParam) {
-        currentUnitId = parseInt(unitParam, 10) || 1;
-      }
+      const questionParam = urlParams.get('question');
+
+let requestedQuestionId = null;
+
+if(unitParam){
+  currentUnitId=parseInt(unitParam,10) || 1;
+}
+
+if(questionParam){
+  requestedQuestionId=decodeURIComponent(questionParam);
+}
+
+
 
       document.getElementById('unit-title').innerText = `Unit ${currentUnitId} Quiz`;
       document.getElementById('analysis-unit-name').innerText = `Unit ${currentUnitId} Breakdown`;
@@ -272,8 +425,21 @@
       }
 
       renderNavigator();
-      loadQuestion(0);
-      startTimer();
+
+let startingIndex=0;
+
+if(requestedQuestionId){
+  const foundIndex=questions.findIndex(
+    q => String(q.id) === String(requestedQuestionId)
+  );
+
+  if(foundIndex !== -1){
+    startingIndex=foundIndex;
+  }
+}
+
+loadQuestion(startingIndex);
+startTimer();
     }
 
     function startTimer() {
@@ -345,7 +511,7 @@
         document.getElementById('next-btn').classList.remove('hidden');
         document.getElementById('analyze-trigger-btn').classList.add('hidden');
       }
-
+      updateBookmarkButton();
       updateNavigatorHighlight();
     }
 
@@ -360,6 +526,7 @@
 
       loadQuestion(currentIndex);
       renderNavigator();
+      
     }
 
     function nextQuestion() {

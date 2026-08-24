@@ -73,7 +73,41 @@ h1{font-size:clamp(28px,7vw,46px);letter-spacing:-.045em;margin:9px 0 10px}
 .saved{display:none;padding:20px;margin-top:16px}
 .saved.open{display:block}
 .empty{color:var(--muted);font-size:14px;padding:12px 0}
-.saved-item{padding:13px 0;border-bottom:1px solid var(--line);font-size:14px}
+.saved-item{
+  padding:14px 0;
+  border-bottom:1px solid var(--line);
+  font-size:14px;
+  cursor:pointer;
+}
+
+.saved-item:last-child{
+  border-bottom:0;
+}
+
+.saved-item:hover{
+  background:#f7f8fa;
+}
+
+.saved-unit{
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:#8b9099;
+  margin-bottom:5px;
+}
+
+.saved-question{
+  color:var(--text);
+  line-height:1.5;
+  font-weight:600;
+}
+
+.saved-action{
+  font-size:11px;
+  color:var(--muted);
+  margin-top:6px;
+}
 
 /* Interstitial Loading Overlay */
 .loading-overlay{
@@ -420,14 +454,43 @@ function toggleSaved(){
 }
 
 function renderSaved(){
-  const saved=JSON.parse(localStorage.getItem("micro_saved_mcqs")||"[]");
+  let saved=[];
+
+  try{
+    saved=JSON.parse(localStorage.getItem("micro_saved_mcqs")||"[]");
+  }catch(e){
+    saved=[];
+  }
+
   if(!saved.length){
-    $("savedContent").textContent="No saved MCQs yet.";
+    $("savedContent").innerHTML='<div class="empty">No saved MCQs yet.</div>';
     return;
   }
-  $("savedContent").innerHTML=saved.map(q=>`<div class="saved-item">${escapeHTML(q)}</div>`).join("");
+
+  $("savedContent").innerHTML=saved.map(q=>`
+    <div class="saved-item" onclick="openSavedQuestion('${encodeURIComponent(q.id)}',${Number(q.unitId)})">
+      <div class="saved-unit">
+        Unit ${escapeHTML(q.unitId)} • ${escapeHTML(q.unitName || "Microbiology")}
+      </div>
+
+      <div class="saved-question">
+        ${escapeHTML(q.question)}
+      </div>
+
+      <div class="saved-action">
+        Tap to open question
+      </div>
+    </div>
+  `).join("");
 }
 
+function openSavedQuestion(encodedId,unitId){
+  const questionId=decodeURIComponent(encodedId);
+
+  window.location.href=
+    `quiz.html?unit=${unitId}&question=${encodeURIComponent(questionId)}`;
+    
+}
 function escapeHTML(s){
   return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
 }

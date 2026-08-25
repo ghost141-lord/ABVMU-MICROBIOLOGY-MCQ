@@ -664,7 +664,7 @@ startTimer();
       
       document.getElementById('ai-prompt-preview').innerText = promptText;
       const encodedQuery = encodeURIComponent(`${q.question} ${q.options.join(' ')}`);
-      document.getElementById('ai-google-external-link').href = `https://www.google.com/search?q=${encodedQuery}`;
+      document.getElementById('ai-google-external-link').href = `https://www.google.com/search?udm=50&q=${encodedQuery}`;
 
       document.getElementById('ai-loading').classList.remove('hidden');
       document.getElementById('ai-content').classList.add('hidden');

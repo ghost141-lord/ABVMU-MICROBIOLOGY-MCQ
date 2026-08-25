@@ -246,6 +246,19 @@ footer{text-align:center;color:#9aa0a8;font-size:10px;margin-top:24px}
   <div id="savedContent" class="empty">No saved MCQs yet.</div>
 </section>
 
+<!-- Easily Configurable Update Announcement Modal -->
+<div id="updateModal" class="name-screen">
+  <div class="name-box card" style="padding: 24px;">
+    <div class="eyebrow" id="updateTag" style="color: #177245;">New Update 🎉</div>
+    <h2 id="updateTitle">What's New!</h2>
+    <div id="updateBody" style="text-align: left; margin: 14px 0 20px; font-size: 13px; line-height: 1.6;">
+      <!-- Configured dynamically via JS -->
+    </div>
+    <button class="continue" onclick="closeUpdateModal()">GOT IT!</button>
+  </div>
+</div>
+
+
 <footer>ABVMU Microbiology MCQs • Built for MBBS learning</footer>
 </main>
 
@@ -297,6 +310,25 @@ const jokes = [
 
 let currentUser = localStorage.getItem("micro_user_name") || "";
 
+// ==========================================
+// ⚙️ UPDATE ANNOUNCEMENT CONTROL PANEL
+// ==========================================
+const ANNOUNCEMENT_CONFIG = {
+  // 🟢 set to true  = SHOW POPUP EVERY TIME PAGE OPENS
+  // 🔴 set to false = HIDE POPUP COMPLETELY
+  enabled: true, 
+
+  tag: "New Feature Added 🎉",
+  title: "Bookmark Filter is Live!",
+  
+  // Non-technical, user-friendly message:
+  bodyHTML: `
+    • <strong>Revise Saved MCQs:</strong> Study only your bookmarked questions within any unit directly inside the quiz screen.<br><br>
+    • <strong>Smart Question Counter:</strong> The bottom navigator auto-adjusts to show only your saved questions.<br><br>
+    • <strong>One-Tap Switch:</strong> Tap the yellow button anytime to return to all unit questions.
+  `
+};
+
 function $(id){return document.getElementById(id)}
 
 function init(){
@@ -305,9 +337,47 @@ function init(){
     setTimeout(()=>$("nameInput").focus(),100);
   } else {
     showUser();
+    checkUpdateAnnouncement();
   }
   renderDailyQuestion();
 }
+
+function checkUpdateAnnouncement(){
+  // If disabled, do not show popup
+  if (!ANNOUNCEMENT_CONFIG.enabled) return;
+
+  // Shows every time index page opens while enabled is true
+  $("updateTag").textContent = ANNOUNCEMENT_CONFIG.tag;
+  $("updateTitle").textContent = ANNOUNCEMENT_CONFIG.title;
+  $("updateBody").innerHTML = ANNOUNCEMENT_CONFIG.bodyHTML;
+  $("updateModal").classList.add("show");
+}
+
+function closeUpdateModal(){
+  $("updateModal").classList.remove("show");
+}
+
+
+function checkUpdateAnnouncement(){
+  // If disabled, do not show popup
+  if (!ANNOUNCEMENT_CONFIG.enabled) return;
+
+  const hasSeenUpdate = localStorage.getItem("micro_seen_update");
+  
+  // Show only if user hasn't seen this versionId yet
+  if (hasSeenUpdate !== ANNOUNCEMENT_CONFIG.versionId) {
+    $("updateTag").textContent = ANNOUNCEMENT_CONFIG.tag;
+    $("updateTitle").textContent = ANNOUNCEMENT_CONFIG.title;
+    $("updateBody").innerHTML = ANNOUNCEMENT_CONFIG.bodyHTML;
+    $("updateModal").classList.add("show");
+  }
+}
+
+function closeUpdateModal(){
+  localStorage.setItem("micro_seen_update", ANNOUNCEMENT_CONFIG.versionId);
+  $("updateModal").classList.remove("show");
+}
+
 
 $("continueBtn").addEventListener("click",saveName);
 $("nameInput").addEventListener("keydown",e=>{if(e.key==="Enter")saveName()});
@@ -484,31 +554,13 @@ function renderSaved(){
   `).join("");
 }
 
-// WITH THIS FIXED VERSION:
-function openSavedQuestion(encodedId, unitId) {
-  const questionId = decodeURIComponent(encodedId);
-  
-  // Unit 1 saved questions open freely without ads
-  if (unitId === 1) {
-    window.location.href = `quiz.html?unit=${unitId}&question=${encodeURIComponent(questionId)}`;
-    return;
-  }
+function openSavedQuestion(encodedId,unitId){
+  const questionId=decodeURIComponent(encodedId);
 
-  // Units 2-10 trigger Monetag ad first
-  showOverlay();
-
-  show_11639645()
-    .then(() => {
-      hideOverlay();
-      window.location.href = `quiz.html?unit=${unitId}&question=${encodeURIComponent(questionId)}`;
-    })
-    .catch((err) => {
-      console.warn("Monetag ad error:", err);
-      hideOverlay();
-      window.location.href = `quiz.html?unit=${unitId}&question=${encodeURIComponent(questionId)}`;
-    });
+  window.location.href=
+    `quiz.html?unit=${unitId}&question=${encodeURIComponent(questionId)}`;
+    
 }
-
 function escapeHTML(s){
   return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
 }

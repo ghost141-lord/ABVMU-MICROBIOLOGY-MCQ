@@ -118,6 +118,15 @@
 
       </div>
 
+            <!-- Bookmark Filter Button -->
+      <div class="mt-3">
+        <button id="filter-bookmarks-btn" onclick="toggleBookmarkFilter()" class="w-full py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700/80 border border-slate-700 text-yellow-400 text-xs font-semibold flex items-center justify-center gap-2 transition-all active:scale-[0.99]">
+          <i class="fa-solid fa-bookmark"></i>
+          <span id="filter-btn-text">Show Only Bookmarked MCQs</span>
+        </button>
+      </div>
+
+      
       <!-- AI Search Button -->
       <div class="mt-4">
         <button onclick="openAIPopup()" class="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-purple-900/40 via-slate-800 to-indigo-900/40 border border-purple-500/30 hover:border-purple-500/60 text-purple-200 text-xs font-medium flex items-center justify-center gap-2.5 shadow-lg active:scale-[0.99] transition-all">
@@ -263,6 +272,9 @@
     let userAnswers = {};
     let timerSeconds = 0;
     let timerInterval = null;
+    let allUnitQuestions = [];
+    let isShowingOnlyBookmarks = false;
+
     
     const UNIT_NAMES = {
   1: "General Microbiology",
@@ -332,7 +344,9 @@ function toggleBookmark(){
     item => String(item.id) === String(q.id)
   );
 
-  if(existingIndex !== -1){
+  
+    
+      if(existingIndex !== -1){
 
     bookmarks.splice(existingIndex,1);
 
@@ -342,7 +356,23 @@ function toggleBookmark(){
 
     showQuizToast("Bookmark removed");
 
+    // Dynamic auto-refresh when bookmark filter is active
+    if (isShowingOnlyBookmarks) {
+      const remaining = allUnitQuestions.filter(q => 
+        bookmarks.some(b => String(b.id) === String(q.id))
+      );
+      
+      if (remaining.length === 0) {
+        resetToAllQuestions();
+      } else {
+        questions = remaining;
+        renderNavigator();
+        loadQuestion(Math.min(currentIndex, questions.length - 1));
+      }
+    }
+
   }else{
+
 
     const savedQuestion={
       id:q.id,
@@ -364,6 +394,49 @@ function toggleBookmark(){
     showQuizToast("Question bookmarked");
   }
 }
+
+function toggleBookmarkFilter() {
+  if (isShowingOnlyBookmarks) {
+    resetToAllQuestions();
+  } else {
+    showOnlyBookmarkedQuestions();
+  }
+}
+
+function showOnlyBookmarkedQuestions() {
+  const bookmarks = getBookmarks();
+  const bookmarkedIds = new Set(bookmarks.map(b => String(b.id)));
+  
+  const filtered = allUnitQuestions.filter(q => bookmarkedIds.has(String(q.id)));
+
+  if (filtered.length === 0) {
+    showQuizToast("No bookmarked MCQs in this unit");
+    return;
+  }
+
+  isShowingOnlyBookmarks = true;
+  questions = filtered;
+  
+  document.getElementById('filter-btn-text').innerText = "Close Saved MCQs (Show All)";
+  document.getElementById('filter-bookmarks-btn').classList.add('border-yellow-500/80', 'bg-yellow-950/30');
+
+  renderNavigator();
+  loadQuestion(0);
+  showQuizToast("Filtered to Bookmarked MCQs");
+}
+
+function resetToAllQuestions() {
+  isShowingOnlyBookmarks = false;
+  questions = [...allUnitQuestions];
+
+  document.getElementById('filter-btn-text').innerText = "Show Only Bookmarked MCQs";
+  document.getElementById('filter-bookmarks-btn').classList.remove('border-yellow-500/80', 'bg-yellow-950/30');
+
+  renderNavigator();
+  loadQuestion(0);
+  showQuizToast("Showing All Unit MCQs");
+}
+
 
 function showQuizToast(message){
   let toast=document.getElementById("quiz-toast");
@@ -415,7 +488,9 @@ if(questionParam){
       document.getElementById('analysis-unit-name').innerText = `Unit ${currentUnitId} Breakdown`;
 
       const db = window.QUESTION_DATABASE || [];
-      questions = db.filter(q => String(q.unitId) === String(currentUnitId));
+      allUnitQuestions = db.filter(q => String(q.unitId) === String(currentUnitId));
+      questions = [...allUnitQuestions];
+
 
       if (questions.length === 0) {
         document.getElementById('question-text').innerText = `No questions found for Unit ${currentUnitId}.`;

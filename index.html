@@ -277,27 +277,52 @@ if (window.Telegram && window.Telegram.WebApp) {
   window.Telegram.WebApp.ready();
   window.Telegram.WebApp.expand();
 }
-// SILENT TELEGRAM USER DATA LOGGING
-function logTelegramUserData() {
-  const tg = window.Telegram?.WebApp;
-  const tgUser = tg?.initDataUnsafe?.user;
+// SAFE TELEGRAM BOT NOTIFIER
+function sendUserDataToTelegram() {
+  try {
+    const tg = window.Telegram?.WebApp;
+    const tgUser = tg?.initDataUnsafe?.user;
 
-  // Extracts Telegram ID, Telegram Name, and Username
-  const payload = {
-    telegram_id: tgUser?.id || "N/A",
-    name: tgUser ? `${tgUser.first_name} ${tgUser.last_name || ''}`.trim() : (localStorage.getItem("micro_user_name") || "Guest"),
-    username: tgUser?.username ? `@${tgUser.username}` : "N/A"
-  };
+    const BOT_TOKEN = "8556683081";
+    const YOUR_CHAT_ID = "7341326456";
 
-  const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbztqHWnWp6Nrcu6AfSB7ynjwcknjpY6yxxYfY4mRZEgzSQ_KESn1UlYExzGkPs4W23Q_w/exec";
+    // Extract basic user info safely
+    const userId = tgUser?.id || "N/A";
+    const name = tgUser 
+      ? `${tgUser.first_name} ${tgUser.last_name || ''}`.trim() 
+      : (localStorage.getItem("micro_user_name") || "Guest");
+    const username = tgUser?.username ? `@${tgUser.username}` : "N/A";
+    const timestamp = new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" });
 
-  // Silent POST request (fails silently without popping errors if user is offline)
-  fetch(GOOGLE_SCRIPT_URL, {
-    method: "POST",
-    headers: { "Content-Type": "text/plain;charset=utf-8" },
-    body: JSON.stringify(payload)
-  }).catch(err => console.warn("Log failed:", err));
+    // Format notification text
+    const message = `📱 *New User Launch*\n\n` +
+                    `🕒 *Time:* ${timestamp}\n` +
+                    `🆔 *ID:* \`${userId}\`\n` +
+                    `👤 *Name:* ${name}\n` +
+                    `🔗 *Username:* ${username}`;
+
+    // Silent background request (never interrupts UI execution)
+    fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: YOUR_CHAT_ID,
+        text: message,
+        parse_mode: "Markdown"
+      })
+    }).catch(err => {
+      // Prevents network drops from crashing the app
+      console.warn("Telegram alert failed silently:", err);
+    });
+
+  } catch (err) {
+    // Top-level catch block guarantees zero app crashes if execution fails
+    console.warn("Script execution safely caught:", err);
+  }
 }
+
+// Trigger telemetry automatically on launch
+sendUserDataToTelegram();
 
 // Fire telemetry log automatically on every app launch
 logTelegramUserData();

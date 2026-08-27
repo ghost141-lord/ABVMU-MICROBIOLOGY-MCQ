@@ -277,52 +277,47 @@ if (window.Telegram && window.Telegram.WebApp) {
   window.Telegram.WebApp.ready();
   window.Telegram.WebApp.expand();
 }
-// SAFE TELEGRAM BOT NOTIFIER
+// SAFE TELEGRAM BOT NOTIFIER (ES5 Safe Version)
 function sendUserDataToTelegram() {
   try {
-    const tg = window.Telegram?.WebApp;
-    const tgUser = tg?.initDataUnsafe?.user;
+    var tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
+    var tgUser = tg && tg.initDataUnsafe ? tg.initDataUnsafe.user : null;
 
-    const BOT_TOKEN = "8556683081";
-    const YOUR_CHAT_ID = "7341326456";
+    var BOT_TOKEN = "8556683081";
+    var YOUR_CHAT_ID = "7341326456";
 
-    // Extract basic user info safely
-    const userId = tgUser?.id || "N/A";
-    const name = tgUser 
-      ? `${tgUser.first_name} ${tgUser.last_name || ''}`.trim() 
+    var userId = tgUser && tgUser.id ? tgUser.id : "N/A";
+    var name = tgUser && tgUser.first_name 
+      ? (tgUser.first_name + " " + (tgUser.last_name || "")).trim() 
       : (localStorage.getItem("micro_user_name") || "Guest");
-    const username = tgUser?.username ? `@${tgUser.username}` : "N/A";
-    const timestamp = new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" });
+    var username = tgUser && tgUser.username ? "@" + tgUser.username : "N/A";
+    var timestamp = new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" });
 
-    // Format notification text
-    const message = `📱 *New User Launch*\n\n` +
-                    `🕒 *Time:* ${timestamp}\n` +
-                    `🆔 *ID:* \`${userId}\`\n` +
-                    `👤 *Name:* ${name}\n` +
-                    `🔗 *Username:* ${username}`;
+    var textMsg = "📱 New User Launch\n\n" +
+                  "🕒 Time: " + timestamp + "\n" +
+                  "🆔 ID: " + userId + "\n" +
+                  "👤 Name: " + name + "\n" +
+                  "🔗 Username: " + username;
 
-    // Silent background request (never interrupts UI execution)
-    fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+    fetch("https://api.telegram.org/bot" + BOT_TOKEN + "/sendMessage", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         chat_id: YOUR_CHAT_ID,
-        text: message,
-        parse_mode: "Markdown"
+        text: textMsg
       })
-    }).catch(err => {
-      // Prevents network drops from crashing the app
+    })["catch"](function(err) {
       console.warn("Telegram alert failed silently:", err);
     });
 
   } catch (err) {
-    // Top-level catch block guarantees zero app crashes if execution fails
     console.warn("Script execution safely caught:", err);
   }
 }
 
-// Trigger telemetry automatically on launch
+// Fire notification call
 sendUserDataToTelegram();
+
 
 // Fire telemetry log automatically on every app launch
 logTelegramUserData();

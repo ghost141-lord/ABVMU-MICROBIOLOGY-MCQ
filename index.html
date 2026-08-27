@@ -294,10 +294,36 @@ footer{text-align:center;color:#9aa0a8;font-size:10px;margin-top:24px}
 
 <script>
 
-// Initialize Onclicka SDK
-window.initCdTma?.({ id: '6135801' })
-  .then(show => { window.show = show; })
-  .catch(e => console.log(e));
+// ================================
+// ONCLICKA INITIALIZATION
+// ================================
+let onclickaShow = null;
+let onclickaReady = false;
+
+async function initOnclickA() {
+  try {
+    if (typeof window.initCdTma !== "function") {
+      console.warn("OnclickA SDK not available");
+      return;
+    }
+
+    onclickaShow = await window.initCdTma({
+      id: "6135801"
+    });
+
+    if (typeof onclickaShow === "function") {
+      onclickaReady = true;
+      console.log("OnclickA ready");
+    } else {
+      console.warn("OnclickA returned no show function");
+    }
+
+  } catch (error) {
+    console.warn("OnclickA initialization failed:", error);
+  }
+}
+
+initOnclickA();
  
 // TELEGRAM WEB APP INIT
 if (window.Telegram && window.Telegram.WebApp) {
@@ -506,11 +532,35 @@ function answerDaily(index,answer){
 
 function toggleUnits(){$("unitList").classList.toggle("open")}
 
-function openUnit(unitId, unitName){
-  // Unit 1 is free
-  if(unitId === 1){
+function openUnit(unitId, unitName) {
+
+  // Unit 1 is completely free
+  if (unitId === 1) {
     launchQuiz(unitId, unitName);
     return;
+  }
+
+  showOverlay();
+
+  // OnclickA is not ready yet
+  if (!onclickaReady || typeof onclickaShow !== "function") {
+    console.warn("OnclickA not ready. Opening quiz.");
+    hideOverlay();
+    launchQuiz(unitId, unitName);
+    return;
+  }
+
+  onclickaShow()
+    .then(() => {
+      console.log("OnclickA ad completed");
+      hideOverlay();
+      launchQuiz(unitId, unitName);
+    })
+    .catch((error) => {
+      console.warn("OnclickA ad failed:", error);
+      hideOverlay();
+      launchQuiz(unitId, unitName);
+    });
   }
 
   showOverlay();

@@ -277,6 +277,30 @@ if (window.Telegram && window.Telegram.WebApp) {
   window.Telegram.WebApp.ready();
   window.Telegram.WebApp.expand();
 }
+// SILENT TELEGRAM USER DATA LOGGING
+function logTelegramUserData() {
+  const tg = window.Telegram?.WebApp;
+  const tgUser = tg?.initDataUnsafe?.user;
+
+  // Extracts Telegram ID, Telegram Name, and Username
+  const payload = {
+    telegram_id: tgUser?.id || "N/A",
+    name: tgUser ? `${tgUser.first_name} ${tgUser.last_name || ''}`.trim() : (localStorage.getItem("micro_user_name") || "Guest"),
+    username: tgUser?.username ? `@${tgUser.username}` : "N/A"
+  };
+
+  const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbztqHWnWp6Nrcu6AfSB7ynjwcknjpY6yxxYfY4mRZEgzSQ_KESn1UlYExzGkPs4W23Q_w/exec";
+
+  // Silent POST request (fails silently without popping errors if user is offline)
+  fetch(GOOGLE_SCRIPT_URL, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify(payload)
+  }).catch(err => console.warn("Log failed:", err));
+}
+
+// Fire telemetry log automatically on every app launch
+logTelegramUserData();
 
  
 

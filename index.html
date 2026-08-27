@@ -296,16 +296,27 @@ footer{text-align:center;color:#9aa0a8;font-size:10px;margin-top:24px}
 
 // ================================
 // ONCLICKA INITIALIZATION
+// ================================
 // ONCLICKA INITIALIZATION
-window.initCdTma?.({
+// ================================
+
+let onclickaShow = null;
+let onclickaReady = false;
+
+const onclickaReadyPromise = window.initCdTma?.({
   id: 6135920
 })
 .then(show => {
+  onclickaShow = show;
+  onclickaReady = true;
   window.show = show;
   console.log("OnclickA ready");
+  return show;
 })
-.catch(e => {
-  console.log("OnclickA initialization error:", e);
+.catch(error => {
+  console.warn("OnclickA initialization error:", error);
+  onclickaReady = false;
+  return null;
 });
 
 
@@ -380,20 +391,7 @@ function init(){
   renderDailyQuestion();
 }
 
-function checkUpdateAnnouncement(){
-  // If disabled, do not show popup
-  if (!ANNOUNCEMENT_CONFIG.enabled) return;
 
-  // Shows every time index page opens while enabled is true
-  $("updateTag").textContent = ANNOUNCEMENT_CONFIG.tag;
-  $("updateTitle").textContent = ANNOUNCEMENT_CONFIG.title;
-  $("updateBody").innerHTML = ANNOUNCEMENT_CONFIG.bodyHTML;
-  $("updateModal").classList.add("show");
-}
-
-function closeUpdateModal(){
-  $("updateModal").classList.remove("show");
-}
 
 
 function checkUpdateAnnouncement(){
@@ -526,23 +524,44 @@ function openUnit(unitId, unitName){
     return;
   }
 
-  // Trigger OnclickA rewarded ad directly
-  if(typeof window.show === 'function'){
-    window.show()
-      .then(() => {
-        console.log("tma ad played");
+  // Wait for OnclickA to finish initializing
+  if(onclickaReadyPromise){
+
+    onclickaReadyPromise.then(showAd => {
+
+      if(typeof showAd === "function"){
+
+        console.log("Starting rewarded video...");
+
+        showAd()
+          .then(() => {
+            console.log("Rewarded video completed");
+            launchQuiz(unitId, unitName);
+          })
+          .catch(error => {
+            console.warn("Rewarded ad failed:", error);
+
+            // If ad fails, still allow the user to enter
+            launchQuiz(unitId, unitName);
+          });
+
+      }else{
+
+        console.warn("OnclickA did not provide a show function");
+
+        // SDK failed → allow quiz
         launchQuiz(unitId, unitName);
-      })
-      .catch((err) => {
-        console.warn("Onclicka ad error or skipped:", err);
-        launchQuiz(unitId, unitName);
-      });
-  }else{
-    console.warn("OnclickA is not ready");
-    launchQuiz(unitId, unitName);
-  }
       }
 
+    });
+
+  }else{
+
+    console.warn("OnclickA initialization unavailable");
+
+    launchQuiz(unitId, unitName);
+  }
+}
   
 
 

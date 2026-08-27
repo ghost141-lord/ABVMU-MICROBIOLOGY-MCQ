@@ -10,8 +10,9 @@
 <!-- TELEGRAM MINI APP SDK -->
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-<!-- Monetag SDK (Official CDN) -->
-<script src='//libtl.com/sdk.js' data-zone='11639645' data-sdk='show_11639645'></script>
+<!-- OnclickA SDK (Official CDN) -->
+<script src="https://js.onclckvd.com/in-stream-ad-admanager/tma.js"></script>
+
 
 <style>
 :root{
@@ -272,6 +273,12 @@ footer{text-align:center;color:#9aa0a8;font-size:10px;margin-top:24px}
 <div id="toast" class="toast"></div>
 
 <script>
+
+// Initialize Onclicka SDK
+window.initCdTma?.({ id: '6135801' })
+  .then(show => { window.show = show; })
+  .catch(e => console.log(e));
+ 
 // TELEGRAM WEB APP INIT
 if (window.Telegram && window.Telegram.WebApp) {
   window.Telegram.WebApp.ready();
@@ -480,28 +487,35 @@ function answerDaily(index,answer){
 function toggleUnits(){$("unitList").classList.toggle("open")}
 
 function openUnit(unitId, unitName){
-  // Unit 1 is completely free
+  // Unit 1 is free
   if(unitId === 1){
     launchQuiz(unitId, unitName);
     return;
   }
 
-  // Other units require a Monetag rewarded interstitial
+  // Units 2-10 require Onclicka rewarded ad
   showOverlay();
 
-  show_11639645()
-    .then(() => {
-      // Ad successfully shown/watched
-      hideOverlay();
-      launchQuiz(unitId, unitName);
-    })
-    .catch((err) => {
-      // If ad fails or is unavailable, still open the quiz
-      console.warn("Monetag ad error:", err);
-      hideOverlay();
-      launchQuiz(unitId, unitName);
-    });
+  if (typeof window.show === 'function') {
+    window.show()
+      .then(() => {
+        // Ad successfully watched
+        hideOverlay();
+        launchQuiz(unitId, unitName);
+      })
+      .catch((err) => {
+        // Fallback on failure or close
+        console.warn("Onclicka ad error:", err);
+        hideOverlay();
+        launchQuiz(unitId, unitName);
+      });
+  } else {
+    // Fallback if ad SDK isn't loaded
+    hideOverlay();
+    launchQuiz(unitId, unitName);
+  }
 }
+
 
 function showOverlay(){
   $("loadingOverlay").classList.add("show");

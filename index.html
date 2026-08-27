@@ -14,7 +14,7 @@
   window.Telegram.WebApp.expand();
 </script>
 <!-- OnclickA SDK (Official CDN) -->
-<script src="https://js.onclckvd.com/in-stream-ad-admanager/tma.js"></script>
+<script src="https://js.onclckvd.com/in-stream-ad-admanager/tma.js" async crossorigin="anonymous"></script>
 
 
 <style>
@@ -510,28 +510,40 @@ function openUnit(unitId, unitName){
     return;
   }
 
-  // Units 2-10 require Onclicka rewarded ad
   showOverlay();
+
+  // Set a 3-second safety timeout in case the ad fails to load or hangs
+  let adTimedOut = false;
+  const adTimeout = setTimeout(() => {
+    adTimedOut = true;
+    hideOverlay();
+    launchQuiz(unitId, unitName);
+  }, 3000);
 
   if (typeof window.show === 'function') {
     window.show()
       .then(() => {
-        // Ad successfully watched
-        hideOverlay();
-        launchQuiz(unitId, unitName);
+        if (!adTimedOut) {
+          clearTimeout(adTimeout);
+          hideOverlay();
+          launchQuiz(unitId, unitName);
+        }
       })
       .catch((err) => {
-        // Fallback on failure or close
         console.warn("Onclicka ad error:", err);
-        hideOverlay();
-        launchQuiz(unitId, unitName);
+        if (!adTimedOut) {
+          clearTimeout(adTimeout);
+          hideOverlay();
+          launchQuiz(unitId, unitName);
+        }
       });
   } else {
-    // Fallback if ad SDK isn't loaded
+    clearTimeout(adTimeout);
     hideOverlay();
     launchQuiz(unitId, unitName);
   }
 }
+
 
 
 function showOverlay(){

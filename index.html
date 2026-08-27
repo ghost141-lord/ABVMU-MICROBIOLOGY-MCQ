@@ -563,39 +563,7 @@ function openUnit(unitId, unitName) {
     });
   }
 
-  showOverlay();
-
-  // Set a 3-second safety timeout in case the ad fails to load or hangs
-  let adTimedOut = false;
-  const adTimeout = setTimeout(() => {
-    adTimedOut = true;
-    hideOverlay();
-    launchQuiz(unitId, unitName);
-  }, 3000);
-
-  if (typeof window.show === 'function') {
-    window.show()
-      .then(() => {
-        if (!adTimedOut) {
-          clearTimeout(adTimeout);
-          hideOverlay();
-          launchQuiz(unitId, unitName);
-        }
-      })
-      .catch((err) => {
-        console.warn("Onclicka ad error:", err);
-        if (!adTimedOut) {
-          clearTimeout(adTimeout);
-          hideOverlay();
-          launchQuiz(unitId, unitName);
-        }
-      });
-  } else {
-    clearTimeout(adTimeout);
-    hideOverlay();
-    launchQuiz(unitId, unitName);
-  }
-}
+  
 
 
 
